@@ -1,0 +1,86 @@
+CREATE DATABASE Outbrain;
+USE Outbrain;
+
+CREATE TABLE Users (
+userID INT PRIMARY KEY,
+UserName VARCHAR(50),
+);
+
+INSERT INTO Users (UserId, UserName) VALUES 
+(1, 'Cassie King'),
+(2, 'Jane Smith'),
+(3, 'Alice Johnson');
+
+CREATE TABLE Posts (
+PostId INT PRIMARY KEY,
+UserId INT FOREIGN KEY REFERENCES Users(UserId),
+PostDate DATETIME,
+Content VARCHAR(255)
+);
+
+INSERT INTO Posts (PostId, UserId, PostDate, Content) VALUES 
+(1, 1, '2024-08-01 10:00:00', 'First post by Cassie'),
+(2, 1, '2024-08-02 11:00:00', 'Second post by Cassie'),
+(3, 2, '2024-08-01 09:30:00', 'First post by Jane'),
+(4, 3, '2024-08-03 12:00:00', 'First post by Alice'),
+(5, 2, '2024-08-04 08:00:00', 'Second post by Jane');
+
+CREATE TABLE Campaigns (
+CampaignId VARCHAR(50) PRIMARY KEY,
+CreateDate DATE,
+AdvertiserId VARCHAR(50),
+AdId INT NULL,
+Budget INT
+);
+
+INSERT INTO Campaigns (CampaignId, CreateDate, AdvertiserId, AdId, Budget) VALUES 
+('C1', '2024-08-01', 'A1', 1, 1000),
+('C2', '2024-08-02', 'A2', 2, 2000),
+('C3', '2024-08-03', 'A3', NULL, 3000),
+('C4', '2024-08-04', 'A4', 3, 4000);
+
+
+CREATE TABLE Ads (
+AdId INT PRIMARY KEY,
+CreateDate DATE,
+CampaignId VARCHAR(50) FOREIGN KEY REFERENCES Campaigns(CampaignId),
+GeoTargeting CHAR(3)
+);
+
+INSERT INTO Ads (AdId, CreateDate, CampaignId, GeoTargeting) VALUES 
+(1, '2024-08-01', 'C1', 'USA'),
+(2, '2024-08-02', 'C2', 'CAN'),
+(3, '2024-08-03', 'C4', 'MEX'),
+(4, '2024-08-04', 'C1', 'USA');
+
+SELECT UserId, 
+MIN(PostDate) AS FirstPostDate, 
+MAX(PostDate) AS LastPostDate
+FROM Posts
+GROUP BY UserId;
+
+
+SELECT AVG(PostCount) AS AvgPostsPerUser
+FROM (
+SELECT UserId, COUNT(PostId) AS PostCount
+FROM Posts
+GROUP BY UserId
+) AS UserPostCounts;
+
+
+SELECT A.AdId, A.CreateDate AS AdCreateDate, A.CampaignId, C.CreateDate AS CampaignCreateDate, C.Budget
+FROM Ads A
+JOIN Campaigns C ON A.CampaignId = C.CampaignId;
+
+SELECT TOP 3 A.GeoTargeting, C.CampaignId, C.Budget
+FROM Ads A
+JOIN Campaigns C ON A.CampaignId = C.CampaignId
+GROUP BY A.GeoTargeting, C.CampaignId, C.Budget
+ORDER BY COUNT(A.AdId) DESC;
+
+SELECT TOP 3 C.CampaignId, C.Budget, A.AdId
+FROM Campaigns C
+LEFT JOIN Ads A ON C.CampaignId = A.CampaignId
+ORDER BY C.Budget DESC;
+
+DROP DATABASE Outbrain;
